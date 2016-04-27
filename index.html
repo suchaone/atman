@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>-->
+    <script type="text/javascript" src="../jquery.min.js"></script>
+    <script>
+      var charCounter = 0;
+      var names = ["Alice", "Bob", "Charlie", "Dianna", "Edgar", "Fionna", "George", "Helen", "Ivan", "Jezabel", "Ken" ];
+
+      var ritualGestures = emojiStringToArray("🙌 👏👋👌💪🙏");
+      var ritualTypes = emojiStringToArray("💃🎵💬🎲");
+      var ritualSymbols = emojiStringToArray("👹💩💀👽🌲🌸🍀🍄🐭🐰🐮🐔🐼🐻🐸🌏🌜⭐️");
+
+      var translation = {
+       "💃": "dance",
+       "🎵": "song",
+       "💬": "conversation",
+       "🎲": "game",
+       "🙌": "the great",
+       "👏": "the happy",
+       "👋": "the friendly",
+       "👌": "the perfect",
+       "💪": "the mighty",
+       "🙏": "the sacred",
+       "👹": "demon",
+       "💩": "poop",
+       "💀": "death",
+       "👽": "alien",
+       "🌲": "tree",
+       "🌸": "flower",
+       "🍀": "clover",
+       "🍄": "mushroom",
+       "🐭": "mouse",
+       "🐰": "rabbit",
+       "🐮": "cow",
+       "🐔": "chicken",
+       "🐼": "panda",
+       "🐻": "bear",
+       "🐸": "frog",
+       "🌏": "earth",
+       "🌜": "moon",
+       "⭐️": "star"
+      };
+
+      var day;
+
+      $(document).ready(function(){
+
+        for (var i = 1; i <= 55; i++) {
+
+          var table = $("<table>");
+          var cell = 0;
+          for (var row = 0; row < 3; row++) {
+            var tr = $("<tr>");
+            for (var col = 0; col < 3; col++) {
+              tr.append("<td class='cell" + cell + "'>");
+              cell++;
+            }
+            $(table).append(tr);
+          }
+                 
+          $("body").append($("<div class='output day" + i + "'>").append(table));
+        }
+
+        var beings = [];
+        var occupied = [];                             // beings temporarily removed from the array
+        beings.push(spawnCharacter());
+        beings.push(spawnCharacter());
+        beings.push(spawnCharacter());
+        beings.push(spawnCharacter());
+        beings.push(spawnCharacter());
+        beings.push(spawnCharacter());
+
+        for (day = 1; day <= 100; day++) {
+          shuffle(beings);                             // roll for initiative
+          beings = occupied.concat(beings);
+          occupied = [];
+          while (beings.length > 0) {
+            var being = beings.pop();
+            occupied.push(being);
+
+            if (being.rituals.length < 1) {
+              being.inventRitual();
+              continue;
+            }
+
+            if (being.loneliness < 5) {
+              being.doRitual([]);
+              continue;
+            }
+            
+            if (beings.length > 0){
+              var partner = randomFromArray(beings);
+              occupied.push(partner); 
+              removeFromArray(beings, partner);
+              being.doRitual([partner]);
+              continue;
+            }
+
+            being.doRitual([]);
+          };
+        }
+
+        $("#range").on("change", function () {
+          $(".output").hide();
+          val = parseInt($(this).val()) + 1;
+          $(".output.day" + val).show();
+        });
+      });
+
+      function emojiStringToArray (str) {
+        split = str.split(/([\uD800-\uDBFF][\uDC00-\uDFFF])/);
+        arr = [];
+        for (var i=0; i<split.length; i++) {
+          char = split[i]
+          if (char !== "" && char !== " ") {
+            arr.push(char);
+          }
+        }
+        return arr;
+      };
+
+      function randomFromArray(ar) {
+        return ar[Math.floor(Math.random() * ar.length)]
+      }
+
+      function spawnCharacter () {
+        var character = {};
+        character.name = charCounter; charCounter++;
+
+        character.activity = "idle";
+        character.loneliness = Math.floor(Math.random() * 10);
+
+        character.rituals = [];
+
+        character.getName = function() {
+          return "<strong>" + names[this.name] + "</strong>";
+        };
+
+        character.getActivity = function() {
+          return character.activity;
+        };
+
+        character.getFace = function() {
+          if (this.loneliness > 7)
+            return "<span class='face'>😞</span>";
+          else if (this.loneliness > 4)
+            return "<span class='face'>😶</span>";
+          else
+            return "<span class='face'>😃</span>";
+        };
+
+        character.doRitual = function(withWho) {
+          if (withWho.length == 0 || (withWho.length == 1 && withWho[0] == this)) {
+            this.loneliness++;
+            this.rituals[this.rituals.length - 1].practice(this);
+          } else {
+            if (this.loneliness > 0)
+              this.loneliness--;
+            this.rituals[this.rituals.length - 1].perform(this, withWho[0]);
+          }
+        };
+
+        character.inventRitual = function() {
+          var ritual = {};
+          ritual.name = randomFromArray(ritualGestures) + randomFromArray(ritualSymbols) + randomFromArray(ritualTypes);
+          var emoji = emojiStringToArray(ritual.name);
+          ritual.getRitualType = function() {
+            return translation[emoji[2]];
+          }
+          ritual.getShortName = function() {
+            var name1 = translation[emoji[0]];
+            var name2 = translation[emoji[1]];
+            var name3 = translation[emoji[2]];
+            return "<em>" + name1 + " " + name2 + "</em>";
+          }
+          ritual.getName = function() {
+            var name1 = translation[emoji[0]];
+            var name2 = translation[emoji[1]];
+            var name3 = translation[emoji[2]];
+            var namex = "";
+
+            if (name3 === "conversation") {
+              namex = name1;
+              name3 = name2;
+              name2 = namex;
+              name1 = "talking about ";
+            }
+
+            if (name3 === "song") {
+              namex = name1;
+              name3 = name2;
+              name2 = namex;
+              name1 = "singing about ";
+            }
+
+            if (name3 === "dance") {
+              name1 = "dancing " + name1;
+            }
+
+            if (name3 === "game") {
+              name1 = "playing " + name1;
+            }
+
+
+            return "<em>" + name1 + " " + name2 + " " + name3 + "</em>";
+          };
+
+          ritual.getEmoji = function() {
+            return ritual.name;
+          }
+
+          ritual.getSkill = function() {
+            return ritual.skill;
+          }
+
+          ritual.getDisposition = function() {
+            return ritual.disposition;
+          }
+          
+          ritual.skill = 0;
+          ritual.disposition = 100;
+
+          ritual.practice = function(being) {
+            this.skill++;
+            consoleOutput(this.getEmoji() + "<br>" + being.getFace() + "<br><span class='caption'>" + being.getName() + " is " + this.getName() + "</span>");
+          }
+
+          ritual.perform = function(being, partner) {
+            this.skill++;
+            consoleOutput(being.getFace() + " " + this.getEmoji() + " " + partner.getFace() + "<br><span class='caption'>" + being.getName() + " and " + partner.getName() + " are " + this.getName() + "</span>");
+          }
+
+          this.rituals.push(ritual);
+          consoleOutput("💡" + ritual.getEmoji() + "<br>" + this.getFace() + "<br><span class='caption'>" + this.getName() + " invented a new " + ritual.getRitualType() + ": " + ritual.getShortName() + "!</span>");
+        };
+
+        return character;
+      }
+
+      function shuffle(a) {
+        var j, x, i;
+        for (i = a.length; i; i -= 1) {
+          j = Math.floor(Math.random() * i);
+          x = a[i - 1];
+          a[i - 1] = a[j];
+          a[j] = x;
+        }
+      }
+
+      function removeFromArray (arr, item) {
+        for(var i = arr.length; i--;) {
+          if(arr[i] === item) {
+            arr.splice(i, 1);
+          }
+        }
+      }
+
+      function consoleOutput (str) {
+        //$(".output.day" + day).append(str + "<br>"); 
+
+        var available = [];
+
+        for (var cell = 0; cell < 9; cell++) {
+          if ($(".output.day" + day + " td.cell" + cell).html() === "")
+            available.push(cell);
+        }
+
+        var cell = randomFromArray(available);
+        $(".output.day" + day + " td.cell" + cell).append(str + "<br>"); 
+      }
+
+    </script>
+    <style>
+      body {
+        font-family: 'Georgia', sans-serif;
+        padding: 2em;
+        background: #DBF5BE;
+        color: #6C926C;
+      }
+      .face {
+        font-size: 1.8em;
+      }
+      h2 {
+        color: #ccc;
+        font-weight: normal;
+        margin-bottom: 0;
+        margin-top: 2em;
+      }
+      #range {
+        width: 100%;
+      }
+      .output {
+        display: none;
+      }
+      .output.day1 {
+        display: block;
+      }
+      td {
+        text-align: center;
+        padding: 2em;
+      }
+
+      .caption {
+        font-size: .7em;
+        opacity: 0;
+      }
+
+      td:hover .caption {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="range" id="range" value="0" min=0 max=50 step="1">
+  </body>
+</html>
