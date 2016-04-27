@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <script   src="https://code.jquery.com/jquery-2.2.3.min.js"   integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="   crossorigin="anonymous"></script>
+    <script src="rangeslider.min.js"></script>
     <script>
       var charCounter = 0;
       var names = ["Alice", "Bob", "Charlie", "Dianna", "Edgar", "Fionna", "George", "Helen", "Ivan", "Jezabel", "Ken" ];
@@ -45,6 +46,31 @@
       var day;
 
       $(document).ready(function(){
+
+        $('#range').rangeslider({
+         polyfill: false,
+     
+         // Default CSS classes
+         rangeClass: 'rangeslider',
+         disabledClass: 'rangeslider--disabled',
+         horizontalClass: 'rangeslider--horizontal',
+         verticalClass: 'rangeslider--vertical',
+         fillClass: 'rangeslider__fill',
+         handleClass: 'rangeslider__handle',
+     
+         // Callback function
+         onInit: function() {},
+     
+         // Callback function
+         onSlide: function(position, value) {
+          $(".output").hide();
+          val = parseInt(value) + 1;
+          $(".output.day" + val).show();
+         },
+     
+         // Callback function
+         onSlideEnd: function(position, value) {}
+        });
 
         for (var i = 1; i <= 55; i++) {
 
@@ -100,12 +126,6 @@
             being.doRitual([]);
           };
         }
-
-        $("#range").on("change", function () {
-          $(".output").hide();
-          val = parseInt($(this).val()) + 1;
-          $(".output.day" + val).show();
-        });
       });
 
       function emojiStringToArray (str) {
@@ -310,6 +330,7 @@
         opacity: 1;
       }
     </style>
+    <link rel="stylesheet" type="text/css" href="rangeslider.css" />
   </head>
   <body>
     <input type="range" id="range" value="0" min=0 max=50 step="1">
